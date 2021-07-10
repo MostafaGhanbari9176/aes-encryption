@@ -7,42 +7,59 @@ private val aesKey =
     byteArrayOf(0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30)
 
 fun main(args: Array<String>) {
+    showMenu()
+}
+
+fun showMenu() {
+    println(".".repeat(30))
     println("Please Inter A Text")
 
-    val input = "readLine()"
+    val input = readLine()
 
-    println("--------- Encrypted Text ---------")
-    val encryptedText = encrypt(input.toString())
-    println(encryptedText)
+    if(input.isNullOrEmpty()){
+        showMenu()
+        return
+    }
+
+    println("--------- Encrypted AESBase64 Text ---------")
+    val encryptedText = encrypt(input.toByteArray())
+    println(String(encryptedText))
 
     println("--------- Decrypted Text ---------")
     val decryptedText = decrypt(encryptedText)
-    println(decryptedText)
+    println(String(decryptedText))
+
+    showMenu()
 }
 
-private fun encrypt(plainText: String): String {
+private fun encrypt(rawData: ByteArray): ByteArray {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+    //you must specify an IV value when doing CBC-mode encryption
+    val iv = IvParameterSpec(List<Byte>(16){0}.toByteArray())
     cipher.init(
         Cipher.ENCRYPT_MODE, SecretKeySpec(aesKey, "AES"),
-        IvParameterSpec(List<Byte>(16){0}.toByteArray())
+        iv
     )
-    val cipherOutPut = cipher.doFinal(plainText.toByteArray())
+    val cipherOutPut = cipher.doFinal(rawData)
 
     val base64 = Base64.getEncoder().encode(cipherOutPut)
 
-    return String(base64)
+    return base64
 }
 
-private fun decrypt(base64Text: String): String {
+private fun decrypt(encryptedData: ByteArray): ByteArray {
     val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+    //you must specify an IV value when doing CBC-mode decryption
+    //and use that same value when performing the CBC-mode encryption
+    val iv = IvParameterSpec(List<Byte>(16){0}.toByteArray())
     cipher.init(
         Cipher.DECRYPT_MODE, SecretKeySpec(aesKey, "AES"),
-        IvParameterSpec(List<Byte>(16){0}.toByteArray())
+        iv
     )
 
-    val cipherText = Base64.getDecoder().decode(base64Text)
+    val cipherText = Base64.getDecoder().decode(encryptedData)
 
     val cipherOutPut = cipher.doFinal(cipherText)
 
-    return String(cipherOutPut)
+    return cipherOutPut
 }
